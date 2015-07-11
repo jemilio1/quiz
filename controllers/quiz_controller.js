@@ -12,7 +12,7 @@ exports.answer = function(req, res){
 	}
 };
 
-//GET /author
-exports.question = function(req,res){
+//GET /quizes/author
+exports.author = function(req,res){
 	res.render('author',{author: 'alumno'});
 };
