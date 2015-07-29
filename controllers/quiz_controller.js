@@ -1,18 +1,39 @@
-//GET /quizes/question
-exports.question = function(req,res){
-	res.render('quizes/question', {pregunta: 'Capital de Italia'});
-};
+var models=require("../models/models.js");
 
-//GET /quizes/answer
-exports.answer = function(req, res){
-	if(req.query.respuesta === 'Roma'){
-		res.render('quizes/answer', {respuesta: 'Correcto'});
-	}else{
-		res.render('quizes/answer', {respuesta: 'Incorrecto'});
+exports.load=function(req,res,next,quizId){
+	models.Quiz.findById(req.params.quizId).then(
+		function(quiz){
+			if(quiz){
+				req.quiz=quiz;
+				next();	
+			}else{
+				next(new Error("No existe quizID="+quizId));
+			}			
+		}
+	).catch(function(error){next(error)});	
+}
+
+exports.index=function(req,res){
+	var search="%";
+	if(req.query.search && req.query.search.trim().length>0){
+		search=req.query.search.replace(/\s/g,"%");
+		search="%"+search+"%";
+		search=search.toUpperCase();
 	}
+	models.Quiz.findAll({where:["upper(pregunta) like ?",search], order:"pregunta" }).then(function(quizes){
+		res.render("quizes/index.ejs",{quizes:quizes, search:req.query.search});
+	}).catch(function(error){next(error)});
 };
 
-//GET /author
-exports.author = function(req,res){
-	res.render('author',{author: 'alumno'});
+exports.show=function(req,res){		
+	res.render("quizes/show",{quiz:req.quiz});	
+};
+
+//GET quizes/answer
+exports.answer=function(req,res){	
+	var resultado="Incorrecto";
+	if(req.query.respuesta && req.query.respuesta.toUpperCase()===req.quiz.respuesta.toUpperCase()){
+		resultado="Conrecto";
+	}	
+	res.render("quizes/answer",{quiz:req.quiz, respuesta:resultado});
 };
